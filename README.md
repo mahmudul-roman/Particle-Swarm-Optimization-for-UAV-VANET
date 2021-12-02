@@ -2,4 +2,4 @@
 
 optimalUAV is the main function which will call the PSOSearch and objfuntest.
 
-csv files are extracted from SUMO.
+csv files are extracted from SUMO which contains vehicles position, angle and mobility information.
