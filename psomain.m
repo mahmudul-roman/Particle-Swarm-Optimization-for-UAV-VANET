@@ -9,15 +9,15 @@ tic;
 % Import trace file(SUMO)
 filename = 'trace.csv';
 
-% Definign the timestept used from the dataset(SUMO)
-timestep = 200;
+% Defining the timestept used from the dataset(SUMO)
+timestep = 200; % Have to change according to the trace file
 % Number of vehicles available in the dataset(SUMO)
-nVehicle = 273;
+nVehicle = 273; % Have to change according to the trace file
 % Duration of time frame (seconds)
-duration = 30;
+duration = 10;
 
 % Infrastructure Position
-pos_inf = [1400,1000];
+pos_inf = [1400,1000]; % Have to change according to the trace file
 infRadius = 500;
 
 % Reading table
@@ -49,24 +49,18 @@ empty_pre_conection.t4 = 0;
 empty_pre_conection.id5 = [];
 empty_pre_conection.t5 = 0;
 
-% counter3 = 1;
-% counter4 = 1;
-% counter5 = 1;
-% counter6 = 1;
-% counter7 = 1;
-
-% Create vehicles connections array
+% Create vehicles connections history array
 pre_conection = repmat(empty_pre_conection, nVehicle, 1);
 
 % Create vehicles array
 object_vehicle = repmat(empty_vehicle, nVehicle, 1);
 
-% Creating vehicles id in previous connection data structure
+% Creating vehicles id for 'connection history' data structure
 for i=1:nVehicle
     pre_conection(i).id = ['veh' num2str((i-1), '%d')];
 end
 
-% Calculating wheter the vehicles has connectivity in the previous time
+% Calculating whether the vehicles has connectivity in the previous time
 % slot or not
 for i=1:n_rows
     if T{i,1} == timestep
@@ -170,7 +164,6 @@ nuncovered_vehicle = size(uncovered_vehicle, 2);
 toc
 %% Problem Definition
 tic;
-%CostFunction = @(x) objfun(x, y, v);  % Cost Function
 
 nVar = 2;   % Decision Variable
 
@@ -183,14 +176,14 @@ VarMax = max(maxPosX, maxPosY);    % Upper Bound of Decision Variables
 
 MaxIt = 300;    % Maximum Number of Iterations
 
-nPop = 100;  % Population Size
+nPop = 200;  % Population Size
 
 w = 1;      % Intertia Coefficient
 wdamp = 0.99; % Damping Ratio of Intertia Coefficient
 c1 = 2;     % Personal Acceleration Coefficient
 c2 = 2;     % Social Acceleration Coefficient
 
-MaxVelocity = 0.2*(VarMax-VarMin);
+MaxVelocity = 0.15*(VarMax-VarMin);
 MinVelocity = -MaxVelocity;
 
 %% Initialization
@@ -216,14 +209,9 @@ for i=1:nPop
     
     % Initialize Velociy
     particle(i).Velocity = zeros(VarSize);
-    
-%     % Evaluation
-%     % Previous Code
-%     particle(i).Cost = CostFunction(particle(i).Position);
-    
-    % New Code (Evaluation)
-    %evaluation = CostFunction(particle(i).Position, nVehicle, object_vehicle);
-    evaluation = feval('objfun',particle(i).Position, nuncovered_vehicle, uncovered_vehicle);
+   
+    % Evaluation
+    evaluation = feval('objfun',particle(i).Position, nuncovered_vehicle, uncovered_vehicle, pos_inf);
     particle(i).Cost = evaluation.Fitness;
     nMi = evaluation.M;
     nNi = evaluation.N;
@@ -263,13 +251,8 @@ for it=1:MaxIt
         particle(i).Position = max(particle(i).Position, VarMin);
         particle(i).Position = min(particle(i).Position, VarMax);
         
-%         % Evaluation
-%         % Previous Code
-%         particle(i).Cost = CostFunction(particle(i).Position);
-        
-        % New Code (Evaluation)
-        %evaluation = CostFunction(particle(i).Position, nVehicle, object_vehicle);
-        evaluation = feval('objfun',particle(i).Position, nuncovered_vehicle, uncovered_vehicle);
+        % Evaluation
+        evaluation = feval('objfun',particle(i).Position, nuncovered_vehicle, uncovered_vehicle, pos_inf);
         particle(i).Cost = evaluation.Fitness;
         
         % Update Personal Best
@@ -301,9 +284,9 @@ for it=1:MaxIt
 end
 
 toc
+
 %% Results
 close all;
-%GlobalBest
 
 % Displaying Results
 disp(['UAV Position: ' num2str(GlobalBest.Position)]);
@@ -342,4 +325,3 @@ axis square
 viscircles(GlobalBest.Position, 500,'Color','r');
 viscircles(pos_inf, 500,'Color','k');
 grid on;
-
